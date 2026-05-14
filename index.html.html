@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🍁 Cabane à Sucre - Sugar Shack Cafe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Quicksand', 'Georgia', serif;
+            background: #1a0f0a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+
+        .game-wrapper {
+            background: #2c1a0e;
+            border-radius: 28px;
+            padding: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            border: 2px solid #e67e22;
+            max-width: 1400px;
+            width: 100%;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            background: linear-gradient(135deg, #2c1810, #1a0f0a);
+            border-radius: 50px;
+            padding: 10px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+            border: 1px solid #e67e22;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #f1c40f;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background: rgba(0,0,0,0.5);
+            padding: 5px 18px;
+            border-radius: 30px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .stat-card span {
+            color: #f1c40f;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Weather */
+        .weather-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .weather-btn {
+            background: rgba(0,0,0,0.6);
+            border: 1px solid #e67e22;
+            color: white;
+            padding: 5px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .weather-btn.active {
+            background: #e67e22;
+        }
+
+        /* Game Board */
+        .game-board {
+            background: #6b4226;
+            border-radius: 20px;
+            padding: 20px;
+            position: relative;
+            min-width: 100%;
+            min-height: 550px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3), 0 5px 15px rgba(0,0,0,0.3);
+            overflow-x: auto;
+        }
+
+        /* Tables */
+        .table {
+            position: absolute;
+            width: 90px;
+            height: 70px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .table:hover { transform: scale(1.05); }
+        .table-selected { filter: drop-shadow(0 0 12px #f1c40f); }
+
+        .table-top {
+            width: 90px;
+            height: 20px;
+            background: linear-gradient(145deg, #c49a6c, #8B5E3C);
+            border-radius: 12px;
+            position: absolute;
+            top: 0;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+        }
+        .table-leg-left, .table-leg-right {
+            width: 8px;
+            height: 40px;
+            background: linear-gradient(90deg, #4a2a18, #3a2010);
+            position: absolute;
+            top: 18px;
+            border-radius: 0 0 4px 4px;
+        }
+        .table-leg-left { left: 15px; }
+        .table-leg-right { right: 15px; }
+        .candle {
+            position: absolute;
+            top: -18px;
+            right: 10px;
+        }
+        .candle-body {
+            width: 8px;
+            height: 16px;
+            background: #f5f0e0;
+            border-radius: 2px;
+        }
+        .candle-flame {
+            width: 8px;
+            height: 12px;
+            background: radial-gradient(ellipse, #ffcc00, #ff6600);
+            border-radius: 50% 50% 30% 30%;
+            animation: flicker 0.5s infinite alternate;
+            margin-bottom: -3px;
+        }
+        @keyframes flicker {
+            0% { transform: scaleX(0.8); opacity: 0.8; }
+            100% { transform: scaleX(1.2); opacity: 1; }
+        }
+        .seat-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            padding: 2px 8px;
+            border-radius: 20px;
+            color: #f1c40f;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+
+        /* NPCs */
+        .npc {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            z-index: 10;
+        }
+        .npc:hover { transform: scale(1.05); }
+        .npc-body {
+            width: 55px;
+            height: 55px;
+            background: #c0392b;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        .npc-face { font-size: 1.8rem; }
+        .npc-name {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            padding: 2px 10px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            font-weight: bold;
+        }
+        .npc-emoji {
+            position: absolute;
+            bottom: -5px;
+            right: -5px;
+            font-size: 1.2rem;
+            background: white;
+            border-radius: 50%;
+            padding: 2px;
+        }
+        .speech-bubble {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            font-weight: bold;
+            z-index: 20;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 6px solid transparent;
+            border-top-color: white;
+        }
+        .speech-bubble.show { opacity: 1; }
+
+        /* Fireplace */
+        .fireplace {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            width: 100px;
+            height: 100px;
+        }
+        .fireplace-stone {
+            width: 100px;
+            height: 80px;
+            background: linear-gradient(180deg, #7a7a7a, #555);
+            border-radius: 10px;
+            position: absolute;
+            bottom: 0;
+        }
+        .fire {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 40px;
+            background: radial-gradient(ellipse, #ff6600, #ffcc00);
+            border-radius: 50% 50% 30% 30%;
+            animation: fireAnim 0.3s infinite alternate;
+        }
+        @keyframes fireAnim {
+            from { width: 28px; height: 35px; opacity: 0.8; }
+            to { width: 35px; height: 42px; opacity: 1; }
+        }
+
+        /* Window */
+        .window {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 120px;
+            background: #87CEEB;
+            border: 8px solid #5c3a1e;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .window-sky {
+            position: absolute;
+            inset: 0;
+            transition: background 0.5s;
+        }
+
+        /* Counter */
+        .counter {
+            position: absolute;
+            bottom: 20px;
+            left: 30px;
+            width: 100px;
+            height: 70px;
+            background: linear-gradient(180deg, #6b4226, #4a2a18);
+            border-radius: 8px;
+            border-top: 4px solid #c49a6c;
+        }
+
+        /* Delivery Item */
+        .delivery-item {
+            position: absolute;
+            background: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            animation: bounce 0.5s ease;
+            z-index: 200;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        @keyframes bounce {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Bottom Panels */
+        .bottom-panels {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .menu-panel, .cart-panel, .chat-panel {
+            background: rgba(30,20,15,0.95);
+            border-radius: 20px;
+            padding: 12px;
+            border: 1px solid #e67e22;
+        }
+        .menu-panel { 
+            flex: 1; 
+            min-width: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .cart-panel { 
+            flex: 0.8; 
+            min-width: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .chat-panel { 
+            flex: 1.2; 
+            min-width: 280px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .menu-panel h3, .cart-panel h3, .chat-panel h3 {
+            color: #f1c40f;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .menu-category {
+            color: #e67e22;
+            font-weight: bold;
+            margin-top: 8px;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #e67e22;
+        }
+        .menu-item {
+            background: rgba(255,255,255,0.08);
+            margin: 4px 0;
+            padding: 8px 10px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .menu-item:hover {
+            background: rgba(230,126,34,0.3);
+            transform: translateX(-3px);
+        }
+        .menu-item-name { color: white; font-size: 0.85rem; }
+        .menu-item-price { color: #f1c40f; font-weight: bold; }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: 0.8rem;
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .remove-btn {
+            background: none;
+            border: none;
+            color: #ff6666;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .discount-row { color: #aaffaa; font-size: 0.7rem; margin: 8px 0; }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            color: #f1c40f;
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px solid #e67e22;
+        }
+        .checkout-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px;
+            background: linear-gradient(135deg, #c0392b, #e67e22);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+        }
+        .checkout-btn:hover:not(:disabled) { transform: scale(1.02); }
+        .checkout-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Chat Panel - FIXED: messages no longer overlap */
+        .chat-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e67e22;
+            flex-shrink: 0;
+        }
+        .chat-avatar { font-size: 1.5rem; }
+        .chat-name { color: #f1c40f; font-weight: bold; }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+        }
+        
+        .message {
+            margin: 0;
+            padding: 8px 12px;
+            border-radius: 18px;
+            font-size: 0.75rem;
+            max-width: 85%;
+            word-wrap: break-word;
+            word-break: break-word;
+            white-space: normal;
+            line-height: 1.4;
+            overflow-wrap: break-word;
+            display: block;
+            position: relative;
+        }
+        
+        .message.user {
+            background: #e67e22;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message.npc {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+        .chat-input-area input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 25px;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            color: white;
+            outline: none;
+            min-width: 0;
+            font-size: 0.85rem;
+        }
+        .chat-input-area input::placeholder {
+            color: rgba(255,255,255,0.5);
+        }
+        .chat-input-area button {
+            background: #e67e22;
+            border: none;
+            border-radius: 25px;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .chat-input-area button:hover {
+            background: #c0392b;
+        }
+
+        /* Games Bar */
+        .games-bar {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .game-btn {
+            background: linear-gradient(135deg, #c0392b, #e67e22);
+            border: none;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: transform 0.2s;
+        }
+        .game-btn:hover { transform: scale(1.05); }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            color: #f1c40f;
+            padding: 10px 25px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; }
+
+        /* Modal for Mini-games */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.open { display: flex; }
+        .modal-content {
+            background: linear-gradient(135deg, #fdf6e3, #f5e6c8);
+            border-radius: 28px;
+            padding: 25px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            border: 3px solid #e67e22;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            font-size: 1.4rem;
+            color: #c0392b;
+            margin-bottom: 15px;
+        }
+        .modal-close {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        /* Memory Game Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .memory-card {
+            aspect-ratio: 3/4;
+            background: linear-gradient(135deg, #c0392b, #e67e22);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .memory-card.flipped {
+            background: white;
+            border: 2px solid #c0392b;
+        }
+        .memory-card.matched {
+            background: #2d5a27;
+            cursor: default;
+            opacity: 0.7;
+        }
+        .dice {
+            font-size: 3rem;
+            margin: 10px;
+            display: inline-block;
+        }
+        .match-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .vocab-card {
+            background: #4a3728;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .vocab-card.selected { background: #c0392b; }
+        .vocab-card.matched { background: #2d5a27; opacity: 0.6; cursor: default; }
+
+        /* Welcome Screen */
+        #welcome {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 50% 30%, #3d1f0d, #0a0500);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s;
+        }
+        .welcome-card {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 35px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid #e67e22;
+        }
+        .welcome-card h1 {
+            color: #f1c40f;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .welcome-card p {
+            color: white;
+            margin-bottom: 15px;
+        }
+        .welcome-card input, .welcome-card select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 25px;
+            border: 1px solid #e67e22;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            outline: none;
+        }
+        .welcome-card button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #c0392b, #e67e22);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .welcome-card button:hover {
+            opacity: 0.9;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 900px) {
+            .bottom-panels {
+                flex-direction: column;
+            }
+            .chat-panel {
+                height: 380px;
+            }
+            .game-board {
+                min-width: 100%;
+                overflow-x: scroll;
+            }
+            .toast {
+                white-space: normal;
+                text-align: center;
+                max-width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="welcome">
+    <div class="welcome-card">
+        <h1>🍁 Cabane à Sucre</h1>
+        <p>Sugar Shack Cafe & Mini-Games</p>
+        <input type="text" id="playerName" placeholder="Your Name" value="Guest">
+        <select id="playerProfile">
+            <option value="regular">Regular Guest</option>
+            <option value="student">🎓 Student (10% off)</option>
+            <option value="senior">👴 Senior (15% off)</option>
+        </select>
+        <button id="startBtn">Enter the Cabane 🚪</button>
+    </div>
+</div>
+
+<div id="gameApp" style="display:none;">
+    <div class="game-wrapper">
+        <div class="stats-bar">
+            <div class="logo">🍁 Cabane Beaumont</div>
+            <div class="stats">
+                <div class="stat-card">💰 $<span id="money">50</span></div>
+                <div class="stat-card">🍁 Syrup: <span id="syrup">0</span></div>
+                <div class="stat-card">⭐ Loyalty: <span id="loyalty">0</span>/10</div>
+            </div>
+        </div>
+        <div class="weather-row">
+            <button class="weather-btn" data-weather="snow">❄️ Snow</button>
+            <button class="weather-btn" data-weather="sunny">☀️ Sunny</button>
+            <button class="weather-btn" data-weather="night">🌙 Night</button>
+        </div>
+        <div class="games-bar">
+            <button class="game-btn" data-game="memory">🎴 Memory Match</button>
+            <button class="game-btn" data-game="dice">🎲 Dice 21</button>
+            <button class="game-btn" data-game="french">🇫🇷 French Quiz</button>
+            <button class="game-btn" data-game="tap">🍂 Tap Leaf</button>
+        </div>
+        <div class="game-board" id="gameBoard">
+            <div class="fireplace"><div class="fireplace-stone"></div><div class="fire"></div></div>
+            <div class="window"><div class="window-sky" id="windowSky"></div></div>
+            <div class="counter"></div>
+        </div>
+        <div class="bottom-panels">
+            <div class="menu-panel">
+                <h3>🍽️ MENU</h3>
+                <div id="menuContainer"></div>
+            </div>
+            <div class="cart-panel">
+                <h3>🛒 YOUR ORDER</h3>
+                <div id="cartContainer"></div>
+                <div id="discountInfo" class="discount-row"></div>
+                <div class="total-row"><span>Total:</span><span id="cartTotal">$0.00</span></div>
+                <button class="checkout-btn" id="checkoutBtn" disabled>🍁 Pay & Eat 🍁</button>
+            </div>
+            <div class="chat-panel">
+                <div class="chat-header">
+                    <span class="chat-avatar" id="chatAvatar">👩</span>
+                    <span class="chat-name" id="chatName">Geneviève</span>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message npc">👩 Bienvenue! Click on a table to sit, then order food! 🍁</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Say something... (French or English)" />
+                    <button id="sendChatBtn">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast">✨ Message ✨</div>
+<div id="gameModal" class="modal">
+    <div class="modal-content">
+        <span class="modal-close" id="modalCloseBtn">&times;</span>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    // ========== GAME STATE ==========
+    let player = {
+        name: "Guest",
+        profile: "regular",
+        money: 50,
+        syrup: 0,
+        loyalty: 0,
+        weather: "snow"
+    };
+    let cart = [];
+    let selectedTable = null;
+    let currentNPC = "genevieve";
+    let isDelivering = false;
+
+    const NPCs = {
+        genevieve: { name: "Geneviève", avatar: "👩", color: "#c0392b", x: 180, y: 420, emoji: "🧹", phrases: ["Bonjour! Welcome!", "How can I help you today?", "Would you like to see the menu?", "Our maple syrup is the best!", "Merci beaucoup! 😊"] },
+        marieclaire: { name: "Marie-Claire", avatar: "👩‍🦱", color: "#2ecc71", x: 420, y: 420, emoji: "📋", phrases: ["Salut! Ready to order?", "The crêpes are amazing!", "Try our special poutine!", "I'll bring your food right away!", "Parfait! Excellent choice!"] },
+        bernard: { name: "Bernard", avatar: "👨‍🍳", color: "#7f8c8d", x: 680, y: 420, emoji: "🍳", phrases: ["Hmph. What do you want?", "Fresh food, made by me.", "The tourtière is perfect.", "Don't waste my time.", "Fine. I'll cook it."] }
+    };
+
+    let tables = [
+        { name: "Window Table", x: 130, y: 300, id: "window", selected: false },
+        { name: "Center Table", x: 380, y: 300, id: "center", selected: false },
+        { name: "Fireplace Table", x: 630, y: 300, id: "fireplace", selected: false }
+    ];
+
+    const MENU = {
+        breakfast: [
+            { id: "b1", name: "Grand Déjeuner", icon: "🍳", price: 16.50 },
+            { id: "b2", name: "Crêpes au sirop", icon: "🥞", price: 8.50 },
+            { id: "b3", name: "Pain doré", icon: "🍞", price: 9.00 }
+        ],
+        mains: [
+            { id: "m1", name: "Poutine au lard", icon: "🍟", price: 14.00 },
+            { id: "m2", name: "Jambon à l'érable", icon: "🍖", price: 18.00 },
+            { id: "m3", name: "Tourtière", icon: "🥧", price: 15.00 }
+        ],
+        drinks: [
+            { id: "d1", name: "Café Beaumont", icon: "☕", price: 3.50 },
+            { id: "d2", name: "Lait chaud érable", icon: "🥛", price: 4.50 }
+        ]
+    };
+
+    // ========== RENDER FUNCTIONS ==========
+    function renderGameBoard() {
+        const board = document.getElementById("gameBoard");
+        document.querySelectorAll(".table, .npc").forEach(el => el.remove());
+
+        tables.forEach(table => {
+            const tableDiv = document.createElement("div");
+            tableDiv.className = `table ${table.selected ? "table-selected" : ""}`;
+            tableDiv.style.left = table.x + "px";
+            tableDiv.style.top = table.y + "px";
+            tableDiv.setAttribute("data-table-id", table.id);
+            tableDiv.innerHTML = `
+                <div class="table-top"></div>
+                <div class="table-leg-left"></div>
+                <div class="table-leg-right"></div>
+                <div class="candle"><div class="candle-flame"></div><div class="candle-body"></div></div>
+                <div class="seat-label">${table.name}</div>
+            `;
+            board.appendChild(tableDiv);
+        });
+
+        for (const [id, npc] of Object.entries(NPCs)) {
+            const npcDiv = document.createElement("div");
+            npcDiv.className = "npc";
+            npcDiv.style.left = npc.x + "px";
+            npcDiv.style.top = npc.y + "px";
+            npcDiv.setAttribute("data-npc-id", id);
+            npcDiv.innerHTML = `
+                <div class="npc-body" style="background: ${npc.color};">
+                    <div class="npc-face">${npc.avatar}</div>
+                </div>
+                <div class="npc-name">${npc.name}</div>
+                <div class="npc-emoji">${npc.emoji}</div>
+                <div class="speech-bubble" id="bubble-${id}"></div>
+            `;
+            board.appendChild(npcDiv);
+        }
+    }
+
+    function updateSky() {
+        const sky = document.getElementById("windowSky");
+        const colors = { snow: "linear-gradient(180deg, #b8cad6, #d4e2ea)", sunny: "linear-gradient(180deg, #87CEEB, #b8e0f0)", night: "linear-gradient(180deg, #0a1030, #1a2040)" };
+        sky.style.background = colors[player.weather] || colors.snow;
+    }
+
+    function updateUI() {
+        document.getElementById("money").textContent = player.money.toFixed(2);
+        document.getElementById("syrup").textContent = player.syrup;
+        document.getElementById("loyalty").textContent = player.loyalty;
+        renderMenu();
+        renderCart();
+    }
+
+    function renderMenu() {
+        const container = document.getElementById("menuContainer");
+        let html = "";
+        for (const [cat, items] of Object.entries(MENU)) {
+            html += `<div class="menu-category">${cat.toUpperCase()}</div>`;
+            items.forEach(item => {
+                html += `
+                    <div class="menu-item" data-item-id="${item.id}">
+                        <span class="menu-item-name">${item.icon} ${item.name}</span>
+                        <span class="menu-item-price">$${item.price}</span>
+                    </div>
+                `;
+            });
+        }
+        container.innerHTML = html;
+    }
+
+    function getDiscount() {
+        let pct = 0;
+        if (player.profile === "student") pct += 10;
+        if (player.profile === "senior") pct += 15;
+        if (player.loyalty >= 5) pct += 5;
+        return { pct, label: `${pct}% off` };
+    }
+
+    function renderCart() {
+        const subtotal = cart.reduce((s, i) => s + i.price, 0);
+        const disc = getDiscount();
+        const total = subtotal * (100 - disc.pct) / 100;
+        const cartContainer = document.getElementById("cartContainer");
+        if (cart.length === 0) {
+            cartContainer.innerHTML = "<div style='color:#aaa; text-align:center;'>Your order is empty</div>";
+        } else {
+            cartContainer.innerHTML = cart.map((item, idx) => `
+                <div class="cart-item" data-cart-index="${idx}">
+                    <span>${item.icon} ${item.name}</span>
+                    <span>$${item.price} <button class="remove-btn">✕</button></span>
+                </div>
+            `).join("");
+        }
+        const discountInfo = document.getElementById("discountInfo");
+        if (disc.pct > 0 && cart.length > 0) discountInfo.innerHTML = `🏷️ ${disc.label} - save $${(subtotal * disc.pct / 100).toFixed(2)}`;
+        else discountInfo.innerHTML = "";
+        document.getElementById("cartTotal").textContent = `$${total.toFixed(2)}`;
+        document.getElementById("checkoutBtn").disabled = cart.length === 0 || total > player.money;
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById("toast");
+        toast.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function addChatMessage(text, type) {
+        const container = document.getElementById("chatMessages");
+        const div = document.createElement("div");
+        div.className = `message ${type}`;
+        div.textContent = text;
+        container.appendChild(div);
+        // Auto-scroll to bottom
+        container.scrollTop = container.scrollHeight;
+        // Keep only last 40 messages (increased from 30)
+        while (container.children.length > 40) {
+            container.removeChild(container.firstChild);
+        }
+    }
+
+    // ========== NPC MOVEMENT ==========
+    function moveNPCToTable(npcId, table, callback) {
+        if (isDelivering) return;
+        isDelivering = true;
+        const npc = NPCs[npcId];
+        const npcElement = document.querySelector(`.npc[data-npc-id="${npcId}"]`);
+        if (!npcElement) return;
+        const startX = npc.x, startY = npc.y;
+        const targetX = table.x + 25, targetY = table.y - 20;
+        let startTime = null;
+
+        function animateStep(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const duration = 500;
+            let progress = Math.min(1, elapsed / duration);
+            npc.x = startX + (targetX - startX) * progress;
+            npc.y = startY + (targetY - startY) * progress;
+            npcElement.style.left = npc.x + "px";
+            npcElement.style.top = npc.y + "px";
+            if (progress < 1) {
+                requestAnimationFrame(animateStep);
+            } else {
+                if (callback) callback(npcId, table);
+            }
+        }
+        requestAnimationFrame(animateStep);
+    }
+
+    function moveNPCBack(npcId, callback) {
+        const npc = NPCs[npcId];
+        const npcElement = document.querySelector(`.npc[data-npc-id="${npcId}"]`);
+        if (!npcElement) return;
+        const startX = npc.x, startY = npc.y;
+        const orig = { genevieve: { x: 180, y: 420 }, marieclaire: { x: 420, y: 420 }, bernard: { x: 680, y: 420 } };
+        const targetX = orig[npcId].x, targetY = orig[npcId].y;
+        let startTime = null;
+
+        function animateStep(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
+            const duration = 500;
+            let progress = Math.min(1, elapsed / duration);
+            npc.x = startX + (targetX - startX) * progress;
+            npc.y = startY + (targetY - startY) * progress;
+            npcElement.style.left = npc.x + "px";
+            npcElement.style.top = npc.y + "px";
+            if (progress < 1) {
+                requestAnimationFrame(animateStep);
+            } else {
+                if (callback) callback();
+                isDelivering = false;
+            }
+        }
+        requestAnimationFrame(animateStep);
+    }
+
+    function showNPCSpeech(npcId, message) {
+        const bubble = document.getElementById(`bubble-${npcId}`);
+        if (bubble) {
+            bubble.textContent = message;
+            bubble.classList.add("show");
+            setTimeout(() => bubble.classList.remove("show"), 2500);
+        }
+    }
+
+    // ========== GAME ACTIONS ==========
+    function selectTable(tableId) {
+        tables.forEach(t => t.selected = (t.id === tableId));
+        selectedTable = tables.find(t => t.id === tableId);
+        renderGameBoard();
+        showToast(`✨ You sit at the ${selectedTable.name}! ✨`);
+        addChatMessage(`🍁 You sit at the cozy ${selectedTable.name}. Order some food!`, "npc");
+    }
+
+    function addToCart(itemId) {
+        for (const cat of Object.values(MENU)) {
+            const found = cat.find(i => i.id === itemId);
+            if (found) {
+                cart.push({ ...found });
+                renderCart();
+                showToast(`➕ Added: ${found.name}`);
+                break;
+            }
+        }
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        renderCart();
+    }
+
+    function checkout() {
+        if (!selectedTable) { showToast("❌ Please click a table to sit first!"); return; }
+        const subtotal = cart.reduce((s, i) => s + i.price, 0);
+        const disc = getDiscount();
+        const total = subtotal * (100 - disc.pct) / 100;
+        if (total > player.money) { showToast("❌ Not enough money!"); return; }
+        player.money -= total;
+        player.loyalty = Math.min(10, player.loyalty + 1);
+        player.syrup += cart.length;
+        const itemNames = cart.map(i => i.name).join(", ");
+        const npcIds = Object.keys(NPCs);
+        const randomNPC = npcIds[Math.floor(Math.random() * npcIds.length)];
+        showToast(`👩‍🍳 ${NPCs[randomNPC].name} is preparing your order...`);
+        showNPCSpeech(randomNPC, `I'll prepare your ${itemNames}!`);
+        moveNPCToTable(randomNPC, selectedTable, (npcId, table) => {
+            showToast(`🍽️ ${NPCs[npcId].name} brings your ${itemNames}! Bon appétit!`);
+            showNPCSpeech(npcId, `Voici votre commande! Bon appétit! 🍁`);
+            addChatMessage(`🍁 ${NPCs[npcId].name}: Here's your ${itemNames}! Enjoy!`, "npc");
+            const board = document.getElementById("gameBoard");
+            const deliveryDiv = document.createElement("div");
+            deliveryDiv.className = "delivery-item";
+            deliveryDiv.textContent = `🍽️ ${itemNames.substring(0, 20)}...`;
+            deliveryDiv.style.left = (table.x + 30) + "px";
+            deliveryDiv.style.top = (table.y - 30) + "px";
+            board.appendChild(deliveryDiv);
+            setTimeout(() => deliveryDiv.remove(), 2000);
+            setTimeout(() => moveNPCBack(npcId, () => showToast(`✨ ${NPCs[npcId].name} returns to their station`)), 2000);
+        });
+        cart = [];
+        updateUI();
+    }
+
+    function talkToNPC(npcId) {
+        currentNPC = npcId;
+        const npc = NPCs[npcId];
+        document.getElementById("chatAvatar").textContent = npc.avatar;
+        document.getElementById("chatName").textContent = npc.name;
+        showToast(`Now chatting with ${npc.name}`);
+        const randomPhrase = npc.phrases[Math.floor(Math.random() * npc.phrases.length)];
+        showNPCSpeech(npcId, randomPhrase);
+        addChatMessage(`👋 You start talking to ${npc.name}`, "user");
+    }
+
+    function sendChat() {
+        const input = document.getElementById("chatInput");
+        const msg = input.value.trim();
+        if (!msg) return;
+        addChatMessage(msg, "user");
+        input.value = "";
+        
+        // NPC responds after a short delay
+        setTimeout(() => {
+            const npc = NPCs[currentNPC];
+            let reply = "";
+            const lowerMsg = msg.toLowerCase();
+            if (lowerMsg.includes("bonjour") || lowerMsg.includes("hello") || lowerMsg.includes("hi")) {
+                const greetings = ["Bonjour! Comment ça va?", "Hello! Welcome to our cabane!", "Salut! Nice to see you!"];
+                reply = greetings[Math.floor(Math.random() * greetings.length)];
+            } else if (lowerMsg.includes("menu") || lowerMsg.includes("food") || lowerMsg.includes("eat")) {
+                const foodReplies = ["Our maple crêpes are famous!", "Try the tourtière, it's delicious!", "I recommend the Grand Déjeuner!"];
+                reply = foodReplies[Math.floor(Math.random() * foodReplies.length)];
+            } else if (lowerMsg.includes("merci") || lowerMsg.includes("thanks")) {
+                reply = "De rien! It's my pleasure! 😊";
+            } else {
+                reply = npc.phrases[Math.floor(Math.random() * npc.phrases.length)];
+            }
+            addChatMessage(`${npc.avatar} ${reply}`, "npc");
+            showNPCSpeech(currentNPC, reply);
+        }, 600);
+    }
+
+    function setWeather(weather) {
+        player.weather = weather;
+        updateSky();
+        document.querySelectorAll(".weather-btn").forEach(btn => btn.classList.remove("active"));
+        const activeBtn = document.querySelector(`.weather-btn[data-weather="${weather}"]`);
+        if (activeBtn) activeBtn.classList.add("active");
+        showToast(`🌤️ Weather changed to ${weather}!`);
+    }
+
+    // ========== MINI-GAMES ==========
+    let memoryCards = [], flippedMemory = [], matchedMemoryIndices = [];
+    function openMemoryGame() {
+        const icons = ["🍁", "🥞", "🍳", "☕", "🥧", "🍮"];
+        memoryCards = [...icons, ...icons];
+        for (let i = memoryCards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [memoryCards[i], memoryCards[j]] = [memoryCards[j], memoryCards[i]];
+        }
+        flippedMemory = [];
+        matchedMemoryIndices = [];
+        document.getElementById("modalBody").innerHTML = `
+            <div class="modal-header">🎴 Memory Match</div>
+            <div class="card-grid" id="memoryGrid"></div>
+            <button class="game-btn" id="newMemoryGameBtn">🔄 New Game</button>
+            <p>🏆 Win: 3 syrup + $2</p>
+        `;
+        document.getElementById("gameModal").classList.add("open");
+        renderMemoryGrid();
+        document.getElementById("newMemoryGameBtn").onclick = () => openMemoryGame();
+    }
+
+    function renderMemoryGrid() {
+        const grid = document.getElementById("memoryGrid");
+        if (!grid) return;
+        grid.innerHTML = memoryCards.map((icon, i) => {
+            const isFlipped = flippedMemory.includes(i);
+            const isMatched = matchedMemoryIndices.includes(i);
+            let display = "?";
+            let additionalClass = "";
+            if (isMatched) {
+                display = icon;
+                additionalClass = "matched";
+            } else if (isFlipped) {
+                display = icon;
+                additionalClass = "flipped";
+            }
+            return `<div class="memory-card ${additionalClass}" data-card-index="${i}">${display}</div>`;
+        }).join("");
+    }
+
+    function flipMemoryCard(idx) {
+        if (matchedMemoryIndices.includes(idx)) return;
+        if (flippedMemory.includes(idx)) return;
+        if (flippedMemory.length >= 2) return;
+        flippedMemory.push(idx);
+        renderMemoryGrid();
+        if (flippedMemory.length === 2) {
+            const a = flippedMemory[0], b = flippedMemory[1];
+            if (memoryCards[a] === memoryCards[b]) {
+                matchedMemoryIndices.push(a, b);
+                flippedMemory = [];
+                renderMemoryGrid();
+                if (matchedMemoryIndices.length === memoryCards.length) {
+                    player.syrup += 3;
+                    player.money += 2;
+                    updateUI();
+                    showToast("🎉 You won Memory! +3 syrup, +$2!");
+                    setTimeout(() => closeModal(), 1500);
+                }
+            } else {
+                setTimeout(() => {
+                    flippedMemory = [];
+                    renderMemoryGrid();
+                }, 800);
+            }
+        }
+    }
+
+    let diceScore = 0, diceActive = true;
+    function openDiceGame() {
+        diceScore = 0; diceActive = true;
+        document.getElementById("modalBody").innerHTML = `
+            <div class="modal-header">🎲 Dice 21 or Less</div>
+            <div class="dice-area"><div><span class="dice" id="d1">🎲</span> <span class="dice" id="d2">🎲</span></div>
+            <div style="font-size:1.2rem; margin:10px;">Score: <span id="score">0</span></div>
+            <button class="game-btn" id="rollDiceBtn">🎲 Roll</button>
+            <button class="game-btn" id="stopDiceBtn">⏹️ Stop</button></div>
+            <p>🏆 Perfect 21: 5 syrup + $5 | Under: 2 syrup + $2</p>
+        `;
+        document.getElementById("gameModal").classList.add("open");
+        document.getElementById("rollDiceBtn").onclick = () => {
+            if (!diceActive) return;
+            const d1 = Math.floor(Math.random() * 6) + 1;
+            const d2 = Math.floor(Math.random() * 6) + 1;
+            diceScore += d1 + d2;
+            document.getElementById("d1").textContent = d1;
+            document.getElementById("d2").textContent = d2;
+            document.getElementById("score").textContent = diceScore;
+            if (diceScore > 21) { showToast("💥 Busted!"); diceActive = false; setTimeout(() => closeModal(), 1500); }
+            if (diceScore === 21) document.getElementById("stopDiceBtn").click();
+        };
+        document.getElementById("stopDiceBtn").onclick = () => {
+            if (!diceActive) return;
+            if (diceScore === 21) { player.syrup += 5; player.money += 5; showToast("🎉 PERFECT 21! +5 syrup, +$5!"); }
+            else if (diceScore <= 21 && diceScore > 0) { player.syrup += 2; player.money += 2; showToast(`🎉 Score: ${diceScore}! +2 syrup, +$2!`); }
+            updateUI(); diceActive = false; setTimeout(() => closeModal(), 1500);
+        };
+    }
+
+    let frenchWords = [
+        { fr: "Bonjour", en: "Hello" }, { fr: "Merci", en: "Thank you" },
+        { fr: "S'il vous plaît", en: "Please" }, { fr: "Délicieux", en: "Delicious" },
+        { fr: "Sirop d'érable", en: "Maple syrup" }, { fr: "Crêpe", en: "Pancake" }
+    ];
+    let selectedVocab = null, matchedVocabPairs = [];
+    function openFrenchGame() {
+        selectedVocab = null;
+        matchedVocabPairs = [];
+        document.getElementById("modalBody").innerHTML = `
+            <div class="modal-header">🇫🇷 French Vocabulary Match</div>
+            <div class="match-grid" id="frenchGrid"></div>
+            <button class="game-btn" id="newFrenchGameBtn">🔄 New Game</button>
+            <p>🏆 Win all: 4 syrup + $3</p>
+        `;
+        document.getElementById("gameModal").classList.add("open");
+        renderFrenchGame();
+        document.getElementById("newFrenchGameBtn").onclick = () => openFrenchGame();
+    }
+
+    function renderFrenchGame() {
+        const grid = document.getElementById("frenchGrid");
+        if (!grid) return;
+        let items = [];
+        frenchWords.forEach((word, idx) => {
+            if (!matchedVocabPairs.includes(idx)) {
+                items.push({ text: word.fr, pair: idx, type: "fr" });
+                items.push({ text: word.en, pair: idx, type: "en" });
+            }
+        });
+        for (let i = items.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [items[i], items[j]] = [items[j], items[i]];
+        }
+        grid.innerHTML = items.map((item, i) => `
+            <div class="vocab-card" data-vocab-index="${i}" data-vocab-pair="${item.pair}" data-vocab-type="${item.type}">${item.text}</div>
+        `).join("");
+    }
+
+    function selectVocab(idx, pair, type) {
+        if (matchedVocabPairs.includes(pair)) return;
+        if (selectedVocab === null) {
+            selectedVocab = idx;
+            renderFrenchGame();
+            const cards = document.querySelectorAll(".vocab-card");
+            if (cards[idx]) cards[idx].classList.add("selected");
+        } else {
+            const prevCard = document.querySelectorAll(".vocab-card")[selectedVocab];
+            const currCard = document.querySelectorAll(".vocab-card")[idx];
+            if (prevCard && currCard && prevCard.textContent !== currCard.textContent) {
+                matchedVocabPairs.push(pair);
+                selectedVocab = null;
+                if (matchedVocabPairs.length === frenchWords.length) {
+                    player.syrup += 4; player.money += 3; updateUI();
+                    showToast("🎉 Parfait! +4 syrup, +$3!");
+                    setTimeout(() => closeModal(), 1500);
+                }
+                renderFrenchGame();
+            } else {
+                selectedVocab = null;
+                renderFrenchGame();
+            }
+        }
+    }
+
+    let tapCount = 0;
+    function openTapGame() {
+        tapCount = 0;
+        document.getElementById("modalBody").innerHTML = `
+            <div class="modal-header">🍂 Tap the Maple Leaf</div>
+            <div style="text-align:center; font-size:6rem; cursor:pointer; padding:20px;" id="tapLeaf">🍁</div>
+            <p style="text-align:center;">Taps: <span id="tapCountDisplay">0</span> / 10</p>
+            <p>🏆 Win: 3 syrup + $2</p>
+        `;
+        document.getElementById("gameModal").classList.add("open");
+        setTimeout(() => {
+            const leaf = document.getElementById("tapLeaf");
+            const counter = document.getElementById("tapCountDisplay");
+            leaf.onclick = () => {
+                tapCount++;
+                counter.textContent = tapCount;
+                if (tapCount >= 10) {
+                    player.syrup += 3; player.money += 2; updateUI();
+                    showToast("🎉 You won! +3 syrup, +$2!");
+                    setTimeout(() => closeModal(), 1000);
+                }
+            };
+        }, 100);
+    }
+
+    function closeModal() {
+        document.getElementById("gameModal").classList.remove("open");
+    }
+
+    // ========== EVENT LISTENERS ==========
+    function setupGlobalEventListeners() {
+        // Table and NPC clicks
+        document.getElementById("gameBoard").addEventListener("click", (e) => {
+            const tableDiv = e.target.closest(".table");
+            if (tableDiv) {
+                const tableId = tableDiv.getAttribute("data-table-id");
+                if (tableId) selectTable(tableId);
+                return;
+            }
+            const npcDiv = e.target.closest(".npc");
+            if (npcDiv) {
+                const npcId = npcDiv.getAttribute("data-npc-id");
+                if (npcId) talkToNPC(npcId);
+                return;
+            }
+        });
+
+        // Menu item clicks
+        document.getElementById("menuContainer").addEventListener("click", (e) => {
+            const menuItem = e.target.closest(".menu-item");
+            if (menuItem) {
+                const itemId = menuItem.getAttribute("data-item-id");
+                if (itemId) addToCart(itemId);
+            }
+        });
+
+        // Cart remove buttons
+        document.getElementById("cartContainer").addEventListener("click", (e) => {
+            const removeBtn = e.target.closest(".remove-btn");
+            if (removeBtn) {
+                const cartItem = removeBtn.closest(".cart-item");
+                if (cartItem) {
+                    const idx = cartItem.getAttribute("data-cart-index");
+                    if (idx !== null) removeFromCart(parseInt(idx));
+                }
+            }
+        });
+
+        // Weather buttons
+        document.querySelectorAll(".weather-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const weather = btn.getAttribute("data-weather");
+                if (weather) setWeather(weather);
+            });
+        });
+
+        // Game buttons
+        document.querySelectorAll(".game-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const game = btn.getAttribute("data-game");
+                if (game === "memory") openMemoryGame();
+                else if (game === "dice") openDiceGame();
+                else if (game === "french") openFrenchGame();
+                else if (game === "tap") openTapGame();
+            });
+        });
+
+        // Checkout button
+        document.getElementById("checkoutBtn").addEventListener("click", checkout);
+
+        // Chat
+        document.getElementById("sendChatBtn").addEventListener("click", sendChat);
+        document.getElementById("chatInput").addEventListener("keypress", (e) => {
+            if (e.key === "Enter") sendChat();
+        });
+
+        // Modal close
+        document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+        window.addEventListener("click", (e) => {
+            const modal = document.getElementById("gameModal");
+            if (e.target === modal) closeModal();
+        });
+
+        // Memory card clicks
+        document.addEventListener("click", (e) => {
+            const card = e.target.closest(".memory-card");
+            if (card && card.closest("#memoryGrid")) {
+                const idx = card.getAttribute("data-card-index");
+                if (idx !== null) flipMemoryCard(parseInt(idx));
+            }
+            const vocabCard = e.target.closest(".vocab-card");
+            if (vocabCard && vocabCard.closest("#frenchGrid")) {
+                const idx = vocabCard.getAttribute("data-vocab-index");
+                const pair = vocabCard.getAttribute("data-vocab-pair");
+                const type = vocabCard.getAttribute("data-vocab-type");
+                if (idx !== null && pair !== null) selectVocab(parseInt(idx), parseInt(pair), type);
+            }
+        });
+    }
+
+    // ========== START GAME ==========
+    function startGame() {
+        const name = document.getElementById("playerName").value.trim();
+        if (name) player.name = name;
+        player.profile = document.getElementById("playerProfile").value;
+        player.money = 50;
+        player.syrup = 0;
+        player.loyalty = 0;
+        cart = [];
+        selectedTable = null;
+        tables.forEach(t => t.selected = false);
+        document.getElementById("welcome").style.opacity = "0";
+        setTimeout(() => {
+            document.getElementById("welcome").style.display = "none";
+            document.getElementById("gameApp").style.display = "block";
+            renderGameBoard();
+            updateSky();
+            updateUI();
+            setupGlobalEventListeners();
+            addChatMessage(`👩 Bonjour ${player.name}! Welcome to Cabane Beaumont! 🍁 Click on a table to sit, then order food!`, "npc");
+        }, 500);
+    }
+
+    document.getElementById("startBtn").addEventListener("click", startGame);
+</script>
+</body>
+</html>
